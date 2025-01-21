@@ -1,11 +1,11 @@
 const Booking = require("../models/bookingModel");
 const User = require("../models/userModels");
-const Event = require('../models/eventModel');
+const Plan = require('../models/planModel');
 
 const createBooking = async (req, res) => {
-    const { userId, eventId, date, time } = req.body;
+    const { planId, date, time, phone, eventType, paymentMethod } = req.body;
 
-    if (!userId || !eventId || !date || !time) {
+    if (!planId || !date || !time || !phone || !eventType || !paymentMethod) {
         return res.status(400).json({
             "success": false,
             "message": "Please enter all fields"
@@ -13,11 +13,23 @@ const createBooking = async (req, res) => {
     }
 
     try {
+        //check if the plan exists
+        const plan = await Plan.findById(planId).populate('event');
+        if (!plan) {
+            return res.status(404).json({
+                "success": false,
+                "message": "Plan not found"
+            })
+        }
+
         const newBooking = new Booking({
-            user: userId,
-            event: eventId,
-            date: date,
-            time: time
+            user: req.user._id,
+            plan: planId,
+            date,
+            time,
+            phone,
+            eventType,
+            paymentMethod
         });
         await newBooking.save();
 
@@ -38,103 +50,116 @@ const getAllBookings = async (req, res) => {
     try {
         let bookings;
         if (req.user.isAdmin) {
-            bookings = await Booking.find().populate('user', 'fullName').populate('event', 'eventTitle');
+            bookings = await Booking.find()
+                .populate("user", "fullName")
+                .populate("plan", "event");
         } else {
-            bookings = await Booking.find({ user: req.user._id }).populate('user', 'fullName').populate('event', 'eventTitle');
+            bookings = await Booking.find({ user: req.user._id })
+                .populate("user", "fullName")
+                .populate("plan", "event");
         }
+
         return res.status(200).json({
-            "success": true,
-            data: bookings
-        })
+            success: true,
+            data: bookings,
+        });
     } catch (error) {
         res.status(500).json({
-            "success": false,
-            "message": "Error fetching bookings"
-        })
+            success: false,
+            message: "Error fetching bookings",
+        });
     }
-}
+};
 
 const getUserBookings = async (req, res) => {
     try {
-        const userBookings = await Booking.find({ user: req.user._id }).populate('event', 'eventTitle');
+        const bookings = await Booking.find({ user: req.user._id }).populate(
+            "plan",
+            "event"
+        );
+
         return res.status(200).json({
-            "success": true,
-            data: userBookings
-        })
+            success: true,
+            data: bookings,
+        });
     } catch (error) {
         res.status(500).json({
-            "success": false,
-            "message": "Error fetching user bookings"
-        })
+            success: false,
+            message: "Error fetching user bookings",
+        });
     }
-}
+};
 
 const updateBookingStatus = async (req, res) => {
     const { bookingId, status } = req.body;
 
     if (!bookingId || !status) {
         return res.status(400).json({
-            "success": false,   
-            "message": "Please enter all fields"
-        })
+            success: false,
+            message: "Please enter all required fields",
+        });
     }
 
     try {
         const booking = await Booking.findById(bookingId);
         if (!booking) {
             return res.status(404).json({
-                "success": false,
-                "message": "Booking not found"
-            })
+                success: false,
+                message: "Booking not found",
+            });
         }
+
         booking.status = status;
         await booking.save();
 
         return res.status(200).json({
-            "success": true,
-            "message": "Booking status updated successfully",
-            booking
-        })
+            success: true,
+            message: "Booking status updated successfully",
+            booking,
+        });
     } catch (error) {
         res.status(500).json({
-            "success": false,
-            "message": "Error updating booking status"
-        })
+            success: false,
+            message: "Error updating booking status",
+        });
     }
-}
+};
 
-const updatePayment = async(res,req)=>{
-    const {bookingId,paymentStatus} = req.body;
 
-    if(!bookingId || !paymentStatus){
+const updatePayment = async (req, res) => {
+    const { bookingId, paymentMethod } = req.body;
+
+    if (!bookingId || !paymentMethod) {
         return res.status(400).json({
-            "success": false,   
-            "message": "Please enter all fields"
-        })
+            success: false,
+            message: "Please enter all required fields",
+        });
     }
-    try{
+
+    try {
         const booking = await Booking.findById(bookingId);
-        if(!booking){
+        if (!booking) {
             return res.status(404).json({
-                "success": false,
-                "message": "Booking not found"
-            })
+                success: false,
+                message: "Booking not found",
+            });
         }
-        booking.paymentMethod = paymentStatus;
-        await booking.save();   
+
+        booking.paymentMethod = paymentMethod;
+        await booking.save();
 
         return res.status(200).json({
-            "success": true,
-            "message": "Payment status updated successfully",
-            booking
-        })
-    }catch(error){
+            success: true,
+            message: "Payment method updated successfully",
+            booking,
+        });
+    } catch (error) {
         res.status(500).json({
-            "success": false,
-            "message": "Error updating payment status"
-        })
+            success: false,
+            message: "Error updating payment method",
+        });
     }
-}
+};
 
 module.exports = {
     createBooking,

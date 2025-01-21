@@ -6,9 +6,13 @@ const bookingSchema = new mongoose.Schema({
         ref: "users",
         required: true
     },
-    event: {
+    plan:{
         type: mongoose.Schema.Types.ObjectId,
-        ref: "events",
+        ref: "Plan",
+        required: true
+    },
+    phone: {
+        type: Number,
         required: true
     },
     date: {
@@ -19,21 +23,27 @@ const bookingSchema = new mongoose.Schema({
         type: String,
         required: true
     },
-    status: {
+    eventType: {
         type: String,
-        enum: ["pending", "approved", "rejected"],
-        default: "pending"
+        required: true
     },
     paymentMethod: {
         type: String,
-        enum: ['Cod', 'Khalti'],
+        enum: ['cod', 'khalti'],
         default: null,
     },
-    createdAt:{
+    status: {
+        type: String,
+        enum: ["pending", "confirmed", "cancelled"],
+        default: "pending"
+    },
+    createdAt: {
         type: Date,
         default: Date.now
     }
-})
+},
+    { timestamps: true }
+)
 
 const Booking = mongoose.model('bookings', bookingSchema)
 module.exports = Booking;

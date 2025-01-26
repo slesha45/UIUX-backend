@@ -3,9 +3,9 @@ const User = require("../models/userModels");
 const Plan = require('../models/planModel');
 
 const createBooking = async (req, res) => {
-    const { planId, date, time, phone, eventType, paymentMethod } = req.body;
+    const { planId, date, time, phone, eventType, totalPrice } = req.body;
 
-    if (!planId || !date || !time || !phone || !eventType || !paymentMethod) {
+    if (!planId || !date || !time || !phone || !eventType || !totalPrice) {
         return res.status(400).json({
             "success": false,
             "message": "Please enter all fields"
@@ -29,15 +29,17 @@ const createBooking = async (req, res) => {
             time,
             phone,
             eventType,
-            paymentMethod
+            totalPrice, // Save totalPrice
+            paymentMethod: req.body.paymentMethod || null,
         });
+
         await newBooking.save();
 
         res.status(201).json({
-            "success": true,
-            "message": "Booking created successfully",
+            success: true,
+            message: "Booking created successfully",
             booking: newBooking
-        })
+        });
     } catch (error) {
         res.status(500).json({
             "success": false,
@@ -101,7 +103,7 @@ const updateBookingStatus = async (req, res) => {
     }
 
     try {
-        const booking = await Booking.findById(bookingId);
+        const booking = await Booking.findById(bookingId).populate("user");
         if (!booking) {
             return res.status(404).json({
                 success: false,
@@ -111,6 +113,20 @@ const updateBookingStatus = async (req, res) => {
 
         booking.status = status;
         await booking.save();
+
+        const userId = booking.user._id;
+        let notificationMessage = "";
+        if (status === "confirmed") {
+            notificationMessage = `Your booking for ${booking.eventType} on ${booking.date} at ${booking.time} has been CONFIRMED.`;
+        } else if (status === "cancelled") {
+            notificationMessage = `Your booking for ${booking.eventType} on ${booking.date} at ${booking.time} has been CANCELLED.`;
+        }
+        if (notificationMessage) {
+            await Notification.create({
+                user: userId,
+                message: notificationMessage
+            })
+        }
 
         return res.status(200).json({
             success: true,

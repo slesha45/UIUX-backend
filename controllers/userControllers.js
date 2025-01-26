@@ -91,9 +91,10 @@ const updateUserProfile = async (req, res) => {
         return res.status(404).json({ message: 'User not found' });
       }
   
-      const { fullName, currentPassword, newPassword } = req.body;
+      const { fullName, email, currentPassword, newPassword } = req.body;
   
       if (fullName) user.fullName = fullName;
+      if (email) user.email = email;
   
       if (currentPassword && newPassword) {
         const isPasswordValid = await bcrypt.compare(currentPassword, user.password);

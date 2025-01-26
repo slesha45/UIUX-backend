@@ -27,6 +27,10 @@ const bookingSchema = new mongoose.Schema({
         type: String,
         required: true
     },
+    totalPrice: {
+      type: Number,
+      required: true  
+    },
     paymentMethod: {
         type: String,
         enum: ['cod', 'khalti'],

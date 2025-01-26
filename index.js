@@ -30,6 +30,7 @@ app.use('/api/review', require('./routes/reviewRoute'))
 app.use('/api/contact', require('./routes/contactRoute'))
 app.use('/api/plan', require('./routes/planRoute'))
 app.use('/api/package', require('./routes/packageRoute'))
+app.use('/api/notification', require('./routes/notificationRoutes'));
 
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);

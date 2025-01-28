@@ -9,7 +9,12 @@ const bookingSchema = new mongoose.Schema({
     plan:{
         type: mongoose.Schema.Types.ObjectId,
         ref: "Plan",
-        required: true
+        required: false
+    },
+    package:{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "packages",
+        required: false
     },
     phone: {
         type: Number,

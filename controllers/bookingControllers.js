@@ -1,52 +1,73 @@
 const Booking = require("../models/bookingModel");
 const User = require("../models/userModels");
 const Plan = require('../models/planModel');
+const Package = require("../models/packageModel");
 
 const createBooking = async (req, res) => {
-    const { planId, date, time, phone, eventType, totalPrice } = req.body;
+  try {
+    const { planId, packageId, date, time, phone, eventType, totalPrice } = req.body;
 
-    if (!planId || !date || !time || !phone || !eventType || !totalPrice) {
-        return res.status(400).json({
-            "success": false,
-            "message": "Please enter all fields"
-        })
+    // Basic checks
+    if (!date || !time || !phone || !eventType || !totalPrice) {
+      return res.status(400).json({
+        success: false,
+        message: "Please enter all required fields",
+      });
     }
 
-    try {
-        //check if the plan exists
-        const plan = await Plan.findById(planId).populate('event');
-        if (!plan) {
-            return res.status(404).json({
-                "success": false,
-                "message": "Plan not found"
-            })
-        }
-
-        const newBooking = new Booking({
-            user: req.user._id,
-            plan: planId,
-            date,
-            time,
-            phone,
-            eventType,
-            totalPrice, // Save totalPrice
-            paymentMethod: req.body.paymentMethod || null,
+    // If planId is given, we'll do the logic for plan
+    let plan;
+    if (planId) {
+      plan = await Plan.findById(planId).populate("event");
+      if (!plan) {
+        return res.status(404).json({
+          success: false,
+          message: "Plan not found",
         });
-
-        await newBooking.save();
-
-        res.status(201).json({
-            success: true,
-            message: "Booking created successfully",
-            booking: newBooking
-        });
-    } catch (error) {
-        res.status(500).json({
-            "success": false,
-            "message": "Error creating booking"
-        })
+      }
     }
-}
+
+    // If packageId is given, we do the logic for package
+    let myPackage;
+    if (packageId) {
+      myPackage = await Package.findById(packageId);
+      if (!myPackage) {
+        return res.status(404).json({
+          success: false,
+          message: "Package not found",
+        });
+      }
+    }
+
+    // Create booking object
+    const newBooking = new Booking({
+      user: req.user._id,
+      plan: planId || null, // store plan if planId given, else null
+      package: packageId || null, // store package if packageId given, else null
+      date,
+      time,
+      phone,
+      eventType,
+      totalPrice,
+      paymentMethod: req.body.paymentMethod || null,
+    });
+
+    await newBooking.save();
+
+    res.status(201).json({
+      success: true,
+      message: "Booking created successfully",
+      booking: newBooking,
+    });
+  } catch (error) {
+    console.error("Error creating booking:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error creating booking",
+    });
+  }
+};
+
 
 const getAllBookings = async (req, res) => {
     try {

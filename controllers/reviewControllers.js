@@ -7,9 +7,17 @@ exports.addReview = async (req, res) => {
     try {
         const review = new Review({ eventId, userId, rating, comment });
         await review.save();
-        res.status(201).json({ message: "Review added successfully", review });
+        res.status(201).json({ 
+            success: true, 
+            message: "Review added successfully", 
+            review 
+        });
     } catch (error) {
-        res.status(500).json({ message: "Failed to add review", error });
+        res.status(500).json({ 
+            success: false, 
+            message: "Failed to add review", 
+            error 
+        });
     }
 };
 

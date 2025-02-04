@@ -2,6 +2,7 @@ const Booking = require("../models/bookingModel");
 const User = require("../models/userModels");
 const Plan = require('../models/planModel');
 const Package = require("../models/packageModel");
+const Notification = require('../models/notificationModel')
 
 const createBooking = async (req, res) => {
   try {
